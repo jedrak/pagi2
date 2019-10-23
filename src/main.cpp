@@ -111,16 +111,7 @@ int main()
     // world space positions of our cubes
     glm::vec3 cubePositions[] = {
             glm::vec3( 0.0f,  0.0f,  0.0f),
-            glm::vec3( 2.0f,  5.0f, -15.0f),
-            glm::vec3(-1.5f, -2.2f, -2.5f),
-            glm::vec3(-3.8f, -2.0f, -12.3f),
-            glm::vec3 (2.4f, -0.4f, -3.5f),
-            glm::vec3(-1.7f,  3.0f, -7.5f),
-            glm::vec3( 1.3f, -2.0f, -2.5f),
-            glm::vec3( 1.5f,  2.0f, -2.5f),
-            glm::vec3( 1.5f,  0.2f, -1.5f),
-            glm::vec3(-1.3f,  1.0f, -1.5f)
-    };
+     };
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -212,7 +203,7 @@ int main()
     // Setup style
     ImGui::StyleColorsDark();
 
-    float angle = 0, camX, camY, camZ;
+    float angle = 0, camX, camY, camZ, rad = 2.0f;
     float color[] = {1.0f, 1.0f, 1.0f, 1.0f};
     int x_or_y;
     // render loop
@@ -237,26 +228,27 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         ImGui::Begin("Hello, world!");
-        if(ImGui::RadioButton("X:", &x_or_y, 0)) {
+        if(ImGui::RadioButton("X", &x_or_y, 0)) {
             camX = 0.0f;
             camY = 0.0f;
             camZ = 0.0f;
         }
         ImGui::SameLine();
-        if(ImGui::RadioButton("Y:", &x_or_y, 1)){
+        if(ImGui::RadioButton("Y", &x_or_y, 1)){
             camX = 0.0f;
             camY = 0.0f;
             camZ = 0.0f;
         }
         ImGui::SliderFloat("angle", &angle, 0.0f, 2*M_PI);
+        ImGui::SliderFloat("rad", &rad, 2.0f, 10.0f);
         if(x_or_y==0){
-            camX   = sin(angle)*10.0f;
-            camZ   = cos(angle)*10.0f;
+            camX   = sin(angle)*rad;
+            camZ   = cos(angle)*rad;
             camY   = 0.0f;
         } else{
             camX   = 0.0f;
-            camZ   = cos(angle)*10.0f;
-            camY   = sin(angle)*10.0f;
+            camZ   = cos(angle)*rad;
+            camY   = sin(angle)*rad;
         }
         ImGui::ColorEdit3("color", color);
         ourShader.setVec4("color", color[0], color[1], color[2], color[3]);
@@ -270,22 +262,21 @@ int main()
         glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         float radius = 10.0f;
 
-        view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        if((angle > M_PI_2 && angle < 3*M_PI_2) && x_or_y == 1){
+            view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+        } else view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ourShader.setMat4("view", view);
 
         // render boxes
         glBindVertexArray(VAO);
-        for (unsigned int i = 0; i < 10; i++)
-        {
-            // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            ourShader.setMat4("model", model);
+        // calculate the model matrix for each object and pass it to shader before drawing
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, cubePositions[0]);
+        float angle = 0;
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        ourShader.setMat4("model", model);
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
