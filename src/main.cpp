@@ -22,6 +22,79 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 const char* glsl_version = "#version 430";
+
+glm::vec3 cubePositions[] = {
+        //corners
+        glm::vec3( 1.0f,  1.0f,  0.0f),
+        glm::vec3( -1.0f,  1.0f,  0.0f),
+        glm::vec3( -1.0f,  -1.0f,  0.0f),
+        glm::vec3( 1.0f,  -1.0f,  0.0f),
+
+        glm::vec3( 1.0f,  1.0f,  1.0f),
+        glm::vec3( -1.0f,  1.0f,  1.0f),
+        glm::vec3( -1.0f,  -1.0f,  1.0f),
+        glm::vec3( 1.0f,  -1.0f,  1.0f),
+
+        glm::vec3( 1.0f,  1.0f,  -1.0f),
+        glm::vec3( -1.0f,  1.0f,  -1.0f),
+        glm::vec3( -1.0f,  -1.0f,  -1.0f),
+        glm::vec3( 1.0f,  -1.0f,  -1.0f),
+
+        //walls
+        glm::vec3( 0.0f,  1.0f,  -1.0f),
+        glm::vec3( 0.0f,  -1.0f,  -1.0f),
+        glm::vec3( -1.0f,  0.0f,  -1.0f),
+        glm::vec3( 1.0f,  0.0f,  -1.0f),
+
+        glm::vec3( 0.0f,  1.0f,  1.0f),
+        glm::vec3( 0.0f,  -1.0f,  1.0f),
+        glm::vec3( -1.0f,  0.0f,  1.0f),
+        glm::vec3( 1.0f,  0.0f,  1.0f),
+};
+void draw_sierpinski_lvl1(glm::vec3 at, float scale, float angleX, float angleY, float angleZ, Shader ourShader){
+    for(auto translate : cubePositions) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(angleX), glm::vec3(1.0f, 0, 0));
+        model = glm::rotate(model, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0));
+        model = glm::rotate(model, glm::radians(angleZ), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::scale(model, glm::vec3(scale, scale, scale));
+        model = glm::translate(model, at);
+        model = glm::translate(model, translate);
+        ourShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    }
+}
+
+//void draw_sierpinski(int lvl, glm::vec3 at){
+//    if(lvl > 1){
+//        for(auto v : cubePositions){
+//            draw_sierpinski(lvl--, at);
+//        }
+//    }
+//    else
+//    {
+//        if(lvl == 1){
+//            draw_sierpinski_lvl1(at, 1, angleX,angleX,)
+//        }
+//    }
+//}
+
+
+void draw_sierpinski(int startDepth, int depth, glm::vec3 at, glm::vec3 rotation, float scale, Shader shader){
+    if(depth <= 0) return;
+    if(depth == 1)
+    {
+        draw_sierpinski_lvl1(at, scale, rotation.x, rotation.y, rotation.z, shader);
+    }
+    else
+    {
+        for (auto v : cubePositions) {
+            draw_sierpinski(depth, depth - 1, glm::vec3((at.x + (scale * v.x)) * 3, (at.y + (scale * v.y)) * 3, (at.z + (scale * v.z)) * 3), rotation, scale, shader);
+            //std::cout<<v.x*scale<<std::endl;
+        }
+    }
+}
 int main()
 {
     // glfw: initialize and configure
@@ -109,34 +182,7 @@ int main()
             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
     // world space positions of our cubes
-    glm::vec3 cubePositions[] = {
-            //corners
-            glm::vec3( 1.0f,  1.0f,  0.0f),
-            glm::vec3( -1.0f,  1.0f,  0.0f),
-            glm::vec3( -1.0f,  -1.0f,  0.0f),
-            glm::vec3( 1.0f,  -1.0f,  0.0f),
 
-            glm::vec3( 1.0f,  1.0f,  1.0f),
-            glm::vec3( -1.0f,  1.0f,  1.0f),
-            glm::vec3( -1.0f,  -1.0f,  1.0f),
-            glm::vec3( 1.0f,  -1.0f,  1.0f),
-
-            glm::vec3( 1.0f,  1.0f,  -1.0f),
-            glm::vec3( -1.0f,  1.0f,  -1.0f),
-            glm::vec3( -1.0f,  -1.0f,  -1.0f),
-            glm::vec3( 1.0f,  -1.0f,  -1.0f),
-
-            //walls
-            glm::vec3( 0.0f,  1.0f,  -1.0f),
-            glm::vec3( 0.0f,  -1.0f,  -1.0f),
-            glm::vec3( -1.0f,  0.0f,  -1.0f),
-            glm::vec3( 1.0f,  0.0f,  -1.0f),
-
-            glm::vec3( 0.0f,  1.0f,  1.0f),
-            glm::vec3( 0.0f,  -1.0f,  1.0f),
-            glm::vec3( -1.0f,  0.0f,  1.0f),
-            glm::vec3( 1.0f,  0.0f,  1.0f),
-     };
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -213,12 +259,12 @@ int main()
 
     // pass projection matrix to shader (as projection matrix rarely changes there's no need to do this per frame)
     // -----------------------------------------------------------------------------------------------------------
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
     ourShader.setMat4("projection", projection);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
@@ -231,6 +277,7 @@ int main()
     float rad = 6.0f;
     float color[] = {1.0f, 1.0f, 1.0f, 1.0f};
     float angleX = 0, angleY = 0, angleZ = 0;
+    int rec = 1;
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -257,7 +304,8 @@ int main()
         ImGui::SliderFloat("angle X", &angleX, 0.0f, 360);
         ImGui::SliderFloat("angle Y", &angleY, 0.0f, 360);
         ImGui::SliderFloat("angle Z", &angleZ, 0.0f, 360);
-        ImGui::SliderFloat("rad", &rad, 4.0f, 10.0f);
+        ImGui::SliderFloat("rad", &rad, 0.0f, 50);
+        ImGui::SliderInt("Recursion", &rec, 1, 6);
 
         ImGui::ColorEdit3("color", color);
         ourShader.setVec4("color", color[0], color[1], color[2], color[3]);
@@ -266,13 +314,19 @@ int main()
         ImGui::Render();
         // activate shader
         ourShader.use();
+        //int numberOfCubesPerRow = 1;
+        //        for(int i = 1; i < rec; i++) numberOfCubesPerRow *= 3;
+        //        std::cout << numberOfCubesPerRow << std::endl;
+        //        float scale = .1;
+        draw_sierpinski(rec, rec, glm::vec3(0,0,0), glm::vec3(angleX,angleY,angleZ), 1, ourShader);
+
 
         // camera/view transformation
         glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        float radius = 10.0f;
 
 
-        view = glm::lookAt(glm::vec3(0, 0, rad), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        view = glm::lookAt(glm::vec3(0, 0, rad * rec), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
         ourShader.setMat4("view", view);
 
@@ -280,21 +334,8 @@ int main()
         glBindVertexArray(VAO);
         // calculate the model matrix for each object and pass it to shader before drawing
 
-        for(auto translate : cubePositions) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::rotate(model, glm::radians(angleX), glm::vec3(1.0f, 0, 0));
-            model = glm::rotate(model, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0));
-            model = glm::rotate(model, glm::radians(angleZ), glm::vec3(0.0f, 0.0f, 1.0f));
-            model = glm::scale(model, glm::vec3(.1, .1, .1));
-            //model = glm::translate(model, glm::vec3(2.5f, 0.0f, 0.0f));
-            model = glm::translate(model, translate);
 
-            ourShader.setMat4("model", model);
-
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        }
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
