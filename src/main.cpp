@@ -54,10 +54,11 @@ glm::vec3 cubePositions[] = {
 void draw_sierpinski_lvl1(glm::vec3 at, float scale, float angleX, float angleY, float angleZ, Shader ourShader){
     for(auto translate : cubePositions) {
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(scale, scale, scale));
         model = glm::rotate(model, glm::radians(angleX), glm::vec3(1.0f, 0, 0));
         model = glm::rotate(model, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0));
         model = glm::rotate(model, glm::radians(angleZ), glm::vec3(0.0f, 0.0f, 1.0f));
-        model = glm::scale(model, glm::vec3(scale, scale, scale));
+
         model = glm::translate(model, at);
         model = glm::translate(model, translate);
         ourShader.setMat4("model", model);
@@ -65,20 +66,6 @@ void draw_sierpinski_lvl1(glm::vec3 at, float scale, float angleX, float angleY,
 
     }
 }
-
-//void draw_sierpinski(int lvl, glm::vec3 at){
-//    if(lvl > 1){
-//        for(auto v : cubePositions){
-//            draw_sierpinski(lvl--, at);
-//        }
-//    }
-//    else
-//    {
-//        if(lvl == 1){
-//            draw_sierpinski_lvl1(at, 1, angleX,angleX,)
-//        }
-//    }
-//}
 
 
 void draw_sierpinski(int startDepth, int depth, glm::vec3 at, glm::vec3 rotation, float scale, Shader shader){
@@ -90,8 +77,7 @@ void draw_sierpinski(int startDepth, int depth, glm::vec3 at, glm::vec3 rotation
     else
     {
         for (auto v : cubePositions) {
-            draw_sierpinski(depth, depth - 1, glm::vec3((at.x + (scale * v.x)) * 3, (at.y + (scale * v.y)) * 3, (at.z + (scale * v.z)) * 3), rotation, scale, shader);
-            //std::cout<<v.x*scale<<std::endl;
+            draw_sierpinski(depth, depth - 1, glm::vec3((at.x + (v.x))*(3*scale)/scale, (at.y + (v.y))*(3*scale)/scale, (at.z + (v.z))*(3*scale)/scale), rotation, scale/3, shader);
         }
     }
 }
@@ -292,7 +278,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // bind textures on corresponding texture units
-        glActiveTexture(GL_TEXTURE0);
+        //glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
@@ -326,7 +312,7 @@ int main()
 
 
 
-        view = glm::lookAt(glm::vec3(0, 0, rad * rec), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        view = glm::lookAt(glm::vec3(0, 0, rad), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
         ourShader.setMat4("view", view);
 
